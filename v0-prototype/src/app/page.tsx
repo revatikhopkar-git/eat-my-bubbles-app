@@ -15,8 +15,40 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 
-const eventOrder = ['50 Freestyle','100 Freestyle','200 Freestyle','500 Freestyle','100 Butterfly','200 Butterfly','100 Breastroke','200 Breastroke','100 Backstroke','200 Backstroke','200 IM'];
-const courses = ['SCY', 'LCM'];
+// Types
+
+type Event = 
+  | '50 Freestyle' | '100 Freestyle' | '200 Freestyle' | '500 Freestyle'
+  | '100 Butterfly' | '200 Butterfly'
+  | '100 Breastroke' | '200 Breastroke'
+  | '100 Backstroke' | '200 Backstroke'
+  | '200 IM';
+
+type Course = 'SCY' | 'LCM';
+type StandardLevel = 'Regionals' | 'State';
+
+type SwimmerTime = {
+  time: number;
+  meet: string;
+  date: string;
+};
+
+type SwimmerData = {
+  [course in Course]: {
+    [event in Event]?: SwimmerTime;
+  };
+};
+
+type Standards = {
+  [level in StandardLevel]: {
+    [course in Course]: {
+      [event in Event]?: number;
+    };
+  };
+};
+
+const eventOrder: Event[] = ['50 Freestyle','100 Freestyle','200 Freestyle','500 Freestyle','100 Butterfly','200 Butterfly','100 Breastroke','200 Breastroke','100 Backstroke','200 Backstroke','200 IM'];
+const courses: Course[] = ['SCY', 'LCM'];
 
 function parseTime(str: string | undefined): number | null {
   if (!str || str.toLowerCase() === 'dq') return null;
@@ -32,10 +64,10 @@ function toTimeStr(seconds: number | null | undefined): string {
 }
 
 export default function SwimApp() {
-  const [event, setEvent] = useState('50 Freestyle');
-  const [course, setCourse] = useState('SCY');
-  const [swimmerData, setSwimmerData] = useState<any>(null);
-  const [standards, setStandards] = useState<any>(null);
+  const [event, setEvent] = useState<Event>('50 Freestyle');
+  const [course, setCourse] = useState<Course>('SCY');
+  const [swimmerData, setSwimmerData] = useState<SwimmerData | null>(null);
+  const [standards, setStandards] = useState<Standards | null>(null);
   const [age, setAge] = useState<number | null>(null);
 
   useEffect(() => {
@@ -46,7 +78,7 @@ export default function SwimApp() {
       const headers = headerLine.split(',');
       return lines.map(line => {
         const values = line.split(',');
-        return headers.reduce((obj, header, i) => {
+        return headers.reduce((obj: any, header, i) => {
           obj[header.trim()] = values[i]?.trim();
           return obj;
         }, {});
@@ -70,18 +102,18 @@ export default function SwimApp() {
         setAge(calculatedAge);
       }
 
-      const pb: any = { SCY: {}, LCM: {} };
-      swimData.forEach(r => {
-        const c = r.Course, e = r.Event, t = parseTime(r['Final Time']);
+      const pb: SwimmerData = { SCY: {}, LCM: {} };
+      swimData.forEach((r: any) => {
+        const c = r.Course as Course, e = r.Event as Event, t = parseTime(r['Final Time']);
         if (!c || !e || !t) return;
-        if (!pb[c][e] || pb[c][e].time > t) {
+        if (!pb[c][e] || pb[c][e]!.time > t) {
           pb[c][e] = { time: t, meet: r['meet_name'], date: r['event_date'] };
         }
       });
 
-      const std: any = { Regionals: { SCY: {}, LCM: {} }, State: { SCY: {}, LCM: {} } };
-      stdData.forEach(r => {
-        const s = r.Standard, c = r.Course, e = r.Event;
+      const std: Standards = { Regionals: { SCY: {}, LCM: {} }, State: { SCY: {}, LCM: {} } };
+      stdData.forEach((r: any) => {
+        const s = r.Standard as StandardLevel, c = r.Course as Course, e = r.Event as Event;
         const t = parseTime(r.Time);
         if (s && c && e && t) std[s][c][e] = t;
       });
@@ -95,7 +127,7 @@ export default function SwimApp() {
 
   if (!swimmerData || !standards || age === null) return <div className="text-center mt-20">Loading...</div>;
 
-  const renderCard = (level: string) => {
+  const renderCard = (level: StandardLevel) => {
     const pb = swimmerData[course][event]?.time;
     const std = standards[level][course][event];
     const met = pb != null && std != null && pb <= std;
@@ -123,12 +155,12 @@ export default function SwimApp() {
     <div className="min-h-screen bg-[url('/water-bg.jpg')] bg-cover bg-center px-4 py-8 font-sans relative">
       <div className="absolute top-4 left-4">
         <Image
-  src="/eat-my-bubbles-logo.png"
-  alt="Eat My Bubbles Logo"
-  width={50}
-  height={50}
-  className="rounded-full shadow-md"
-	/>
+          src="/eat-my-bubbles-logo.png"
+          alt="Eat My Bubbles Logo"
+          width={50}
+          height={50}
+          className="rounded-full shadow-md"
+        />
       </div>
 
       <div className="max-w-2xl mx-auto backdrop-blur-md bg-white/70 rounded-xl p-6">
