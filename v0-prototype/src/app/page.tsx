@@ -168,7 +168,7 @@ export default function SwimApp() {
         <h2 className="text-lg font-medium text-center mb-6 text-zinc-700">Saanvi Khopkar, Age {age}</h2>
 
         <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
-          <Select value={event} onValueChange={setEvent}>
+          <Select value={event} onValueChange={(val: string) => setEvent(val as Event)}>
             <SelectTrigger>
               <SelectValue placeholder="Select Event" />
             </SelectTrigger>
@@ -177,7 +177,7 @@ export default function SwimApp() {
             </SelectContent>
           </Select>
 
-          <Select value={course} onValueChange={setCourse}>
+          <Select value={course} onValueChange={(val: string) => setCourse(val as Course)}>
             <SelectTrigger>
               <SelectValue placeholder="Select Course" />
             </SelectTrigger>
